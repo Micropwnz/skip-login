@@ -1,371 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Skip Client Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --blue: #4a90e2;
-      --blue-strong: #357ab8;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-      background: radial-gradient(ellipse at center, #0b0c1f 0%, #02020b 80%);
-      color:#eaeaea;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      position:relative;
+    :root {
+      --primary: #4a90e2;
+      --primary-hover: #357ab8;
+      --white: #ffffff;
+      --text-dark: #2c3e50;
+      --text-light: #7f8c8d;
+      --border: #dce3eb;
     }
 
-    /* stars */
-    .star{position:absolute;border-radius:50%;background:#fff;opacity:.85;animation:twinkle 3s infinite ease-in-out}
-    @keyframes twinkle{0%,100%{opacity:.8}50%{opacity:.2}}
-
-    /* shooting star */
-    .shooting-star{
-      position:absolute;width:2px;height:80px;background:linear-gradient(-45deg,#fff,rgba(255,255,255,0));
-      opacity:.85;border-radius:50%;filter:drop-shadow(0 0 6px #fff)
+    * {
+      box-sizing: border-box;
     }
 
-    /* login box */
-    .login-box{
-      width:100%;max-width:460px;
-      padding:32px 28px;border-radius:14px;
-      background:rgba(10,12,20,0.85);
-      box-shadow:0 10px 30px rgba(0,0,0,0.7);
-      z-index:10;color:#e8f3ff;
-      display: block;
-    }
-    .login-box h1{margin:0 0 18px;font-size:26px;text-align:center}
-    .input-group{margin-bottom:14px}
-    label{display:block;margin-bottom:6px;font-weight:600;font-size:14px}
-    input[type="text"],input[type="password"]{
-      width:100%;padding:12px 14px;border-radius:8px;border:1.5px solid #333;background:#0f1720;color:#eaf6ff;font-size:15px;
-    }
-    input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 10px rgba(74,144,226,0.15)}
-    button[type="submit"], #goSkipBtn {
-      width:100%;padding:13px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-weight:700;font-size:16px;cursor:pointer;
-      box-shadow:0 8px 20px rgba(74,144,226,0.2);
-      margin-top: 10px;
-    }
-    button[type="submit"]:hover, #goSkipBtn:hover{background:var(--blue-strong)}
-
-    /* dev output */
-    .dev-output{
-      margin-top:14px;padding:12px;border-radius:8px;background:#fff7e6;border:1px solid #ffecb5;color:#6a4b00;
-      font-weight:600;display:none;white-space:pre-wrap;max-height:240px;overflow:auto;word-break:break-word;
-    }
-    /* dark dev output variant */
-    .dev-output.dark{background:#3e371a;border-color:#6b5b10;color:#ffefbf}
-
-    /* footer */
-    .footer{margin-top:18px;text-align:center;color:#c7d8ff;font-size:13px}
-
-    /* dev access btn */
-    #devAccessBtn{
-      position:fixed;top:12px;right:12px;padding:7px 12px;border-radius:12px;border:none;background:rgba(74,144,226,0.9);
-      color:#042;cursor:pointer;font-weight:700;z-index:60;box-shadow:0 6px 18px rgba(74,144,226,0.25)
-    }
-    #devAccessBtn:hover{background:rgba(53,122,184,0.95)}
-
-    /* modal overlay */
-    #modalOverlay{
-      position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;
-      visibility:hidden;opacity:0;transition:opacity .25s;z-index:120;
-    }
-    #modalOverlay.active{visibility:visible;opacity:1}
-    #modalContent{
-      width:90%;max-width:360px;background:#0f1720;color:#eaf6ff;padding:22px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.7)
-    }
-    #modalContent h2{margin:0 0 12px;text-align:center}
-    #modalContent input{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #333;background:#0b1116;color:#eaf6ff}
-    #modalButtons{display:flex;gap:10px;margin-top:14px}
-    #modalButtons button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-    #modalSubmitBtn{background:var(--blue);color:#fff}
-    #modalCancelBtn{background:#666;color:#fff}
-
-    /* toast */
-    #toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      padding:10px 18px;border-radius:20px;background:#d4edda;color:#155724;font-weight:700;box-shadow:0 8px 28px rgba(0,0,0,0.4);
-      opacity:0;pointer-events:none;transition:opacity .25s,z-index .25s;z-index:200
-    }
-    #toast.show{opacity:1;pointer-events:auto}
-
-    /* mode toggle */
-    #modeToggle{
-      position:fixed;bottom:14px;right:14px;width:46px;height:46px;border-radius:50%;border:none;background:rgba(74,144,226,0.9);
-      color:#fff;font-size:20px;cursor:pointer;z-index:60;box-shadow:0 8px 24px rgba(74,144,226,0.25)
-    }
-    #modeToggle:hover{background:rgba(53,122,184,0.95)}
-
-    /* light-mode adjustments */
-    body.light-mode{background: radial-gradient(ellipse at center,#e6eefc 0%,#d1d9ee 80%);color:#1a2532}
-    body.light-mode .login-box{background:#ffffff;color:#1a2532;box-shadow:0 8px 28px rgba(0,0,0,0.08)}
-    body.light-mode input{background:#fff;border-color:#d8dbe0;color:#10202e}
-    body.light-mode #modalContent{background:#fff;color:#10202e}
-    body.light-mode .dev-output{background:#fffbe6;border-color:#ffeec3;color:#6a4b00}
-    body.light-mode #toast{background:#d4edda;color:#155724}
-
-    /* iframe container styles */
-    #skipContainer {
-      display: none;
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(-45deg, #4a90e2, #6dd5ed, #70e1f5, #d6eaff);
+      background-size: 400% 400%;
+      animation: gradientMove 15s ease infinite;
+      display: flex;
       flex-direction: column;
-      width: 100%;
-      max-width: 960px;
-      height: 90vh;
-      background: rgba(10, 12, 20, 0.95);
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-      z-index: 20;
-      color: #e8f3ff;
-      position: relative;
-      padding: 10px;
-    }
-    #skipContainer.light-mode {
-      background: #ffffff;
-      color: #1a2532;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
-    }
-    #goBackBtn {
-      align-self: flex-start;
-      margin-bottom: 8px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 10px;
-      background: var(--blue);
-      color: white;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(74,144,226,0.2);
-    }
-    #goBackBtn:hover {
-      background: var(--blue-strong);
-    }
-    #skipIframe {
-      flex: 1;
-      width: 100%;
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-      background: #000;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
 
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .login-box {
+      position: relative;
+      background: var(--white);
+      padding: 36px 32px 30px;
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-box h1 {
+      margin: 0 0 24px;
+      font-size: 24px;
+      color: var(--text-dark);
+      text-align: center;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    }
+
+    .login-box button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .login-box button[type="submit"]:hover {
+      background: var(--primary-hover);
+    }
+
+    .dev-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 10px;
+      color: #aaa;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      opacity: 0.6;
+      transition: all 0.2s ease;
+    }
+
+    .dev-button:hover {
+      opacity: 1;
+      color: #555;
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .dev-button::after {
+      content: "Dev";
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .dev-output {
+      margin-top: 20px;
+      padding: 12px;
+      background: #fffbe6;
+      border: 1px solid #ffe58f;
+      border-radius: 8px;
+      color: #8c6d1f;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: pre-wrap;
+      display: none;
+    }
+
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    .credits {
+      margin-top: 25px;
+      font-size: 12px;
+      color: #ffffffaa;
+      text-align: center;
+      font-weight: 500;
+    }
   </style>
 </head>
-<body class="light-mode">
+<body>
 
-  <!-- Dev Access Button -->
-  <button id="devAccessBtn" aria-label="Developer Access">Dev Access</button>
+  <div class="login-box">
+    <h1>Skip Client</h1>
 
-  <!-- Mode toggle -->
-  <button id="modeToggle" title="Toggle light/dark mode">🌙</button>
+    <!-- 🔘 Small Dev Access Button -->
+    <button type="button" class="dev-button" id="showDevBtn" title="Developer Access"></button>
 
-  <!-- Login box -->
-  <section class="login-box" aria-labelledby="loginTitle">
-    <h1 id="loginTitle">Skip Client Login</h1>
-
-    <form id="loginForm" autocomplete="off">
+    <form id="loginForm">
       <div class="input-group">
         <label for="username">Username</label>
-        <input id="username" name="username" type="text" placeholder="Enter username" required />
+        <input type="text" id="username" placeholder="Enter username" required />
       </div>
 
       <div class="input-group">
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" placeholder="Enter password" required />
+        <input type="password" id="password" placeholder="Enter password" required />
       </div>
 
       <button type="submit">Login</button>
-      <!-- The "Go onto Skip" button appears after login -->
-      <button id="goSkipBtn" type="button" style="display:none;">Go onto Skip</button>
     </form>
 
-    <pre id="devOutput" class="dev-output" aria-live="polite" role="region" tabindex="0"></pre>
+    <div id="devOutput" class="dev-output" role="status" aria-live="polite"></div>
 
-    <div class="footer">Made by Frix and Micro</div>
-  </section>
-
-  <!-- Container for iframe and back button -->
-  <div id="skipContainer" aria-label="Skip embedded site">
-    <button id="goBackBtn">← Back to Login</button>
-    <iframe id="skipIframe" src="https://skip.nightly.pw" title="Skip Website"></iframe>
-  </div>
-
-  <!-- Modal -->
-  <div id="modalOverlay" aria-hidden="true">
-    <div id="modalContent" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <h2 id="modalTitle">Developer Access</h2>
-      <input id="devCodeInput" type="password" placeholder="Enter developer code" aria-label="Developer code" />
-      <div id="modalButtons">
-        <button id="modalSubmitBtn" type="button">Submit</button>
-        <button id="modalCancelBtn" type="button">Cancel</button>
-      </div>
+    <div class="footer">
+      &copy; 2025 Skip Client
     </div>
   </div>
 
-  <!-- Toast -->
-  <div id="toast" role="status" aria-live="polite"></div>
+  <!-- 👇 Credits -->
+  <div class="credits">
+    Created by Hihiben Frix and Micropwnz
+  </div>
 
   <script>
-    (function(){
-      // Elements
-      const body = document.body;
-      const devAccessBtn = document.getElementById('devAccessBtn');
-      const modeToggle = document.getElementById('modeToggle');
-      const loginForm = document.getElementById('loginForm');
-      const usernameEl = document.getElementById('username');
-      const passwordEl = document.getElementById('password');
-      const devOutput = document.getElementById('devOutput');
+    const BACKEND = "https://skip-client-login.onrender.com"; // your live backend
+    const DEV_CODE = "jackson";
 
-      const modalOverlay = document.getElementById('modalOverlay');
-      const devCodeInput = document.getElementById('devCodeInput');
-      const modalSubmitBtn = document.getElementById('modalSubmitBtn');
-      const modalCancelBtn = document.getElementById('modalCancelBtn');
+    async function saveUsername(username) {
+      try {
+        await fetch(`${BACKEND}/api/entries`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+      } catch (err) {
+        console.error("Server save failed:", err);
+      }
+    }
 
-      const toast = document.getElementById('toast');
+    async function fetchDevEntries(code) {
+      try {
+        const res = await fetch(`${BACKEND}/api/dev?code=${encodeURIComponent(code)}`);
+        if (!res.ok) throw new Error("Invalid dev code or server error.");
+        const data = await res.json();
+        return data.entries || [];
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching dev data.");
+        return [];
+      }
+    }
 
-      const goSkipBtn = document.getElementById('goSkipBtn');
-      const skipContainer = document.getElementById('skipContainer');
-      const goBackBtn = document.getElementById('goBackBtn');
+    document.getElementById("loginForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
 
-      const DEV_CODE = 'jackson';
-      // store credentials entered by user
-      const credentials = [];
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const devOutput = document.getElementById("devOutput");
 
-      // Toast helper
-      function showToast(msg, error = false){
-        toast.textContent = msg;
-        toast.className = error ? 'show error' : 'show';
-        if(error){
-          toast.style.background = '#f8d7da'; toast.style.color = '#721c24';
+      devOutput.style.display = "none";
+      devOutput.textContent = "";
+
+      if (!username || !password) {
+        alert("Please enter both username and password.");
+        return;
+      }
+
+      await saveUsername(username);
+
+      alert("Logged in as: " + username);
+
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+    });
+
+    document.getElementById("showDevBtn").addEventListener("click", async function () {
+      const code = prompt("Enter Dev Access Code:");
+      const devOutput = document.getElementById("devOutput");
+
+      if (code === DEV_CODE) {
+        const entries = await fetchDevEntries(code);
+
+        if (entries.length === 0) {
+          devOutput.textContent = "No usernames saved yet.";
         } else {
-          toast.style.background = body.classList.contains('light-mode') ? '#d4edda' : '#234d24';
-          toast.style.color = body.classList.contains('light-mode') ? '#155724' : '#b7e4b8';
+          let output = "🧠 DEV USERNAME LIST:\n\n";
+          entries.forEach((e, i) => {
+            output += `${i + 1}. Username: ${e.username}\n   Created: ${new Date(e.createdAt).toLocaleString()}\n\n`;
+          });
+          devOutput.textContent = output.trim();
         }
-        clearTimeout(toast._t);
-        toast._t = setTimeout(()=> toast.className='', 3500);
+
+        devOutput.style.display = "block";
+      } else if (code !== null) {
+        alert("Incorrect dev code. Access denied.");
       }
-
-      // Light/dark toggle
-      function toggleMode(){
-        if(body.classList.contains('light-mode')){
-          body.classList.remove('light-mode'); body.classList.add('dark-mode');
-          modeToggle.textContent = '☀️';
-          // Update dev output styling
-          if(devOutput.style.display !== 'none') devOutput.classList.add('dark');
-          // Update iframe container background
-          skipContainer.classList.remove('light-mode');
-        } else {
-          body.classList.remove('dark-mode'); body.classList.add('light-mode');
-          modeToggle.textContent = '🌙';
-          if(devOutput.style.display !== 'none') devOutput.classList.remove('dark');
-          skipContainer.classList.add('light-mode');
-        }
-      }
-      modeToggle.addEventListener('click', toggleMode);
-
-      // open/close modal
-      function openModal(){
-        modalOverlay.classList.add('active'); modalOverlay.style.visibility = 'visible';
-        devCodeInput.value = ''; devCodeInput.focus();
-      }
-      function closeModal(){
-        modalOverlay.classList.remove('active'); modalOverlay.style.visibility = 'hidden';
-        devCodeInput.value = '';
-      }
-
-      devAccessBtn.addEventListener('click', openModal);
-      modalCancelBtn.addEventListener('click', closeModal);
-
-      modalOverlay.addEventListener('click', (e)=>{
-        if(e.target === modalOverlay) closeModal();
-      });
-
-      window.addEventListener('keydown', (e)=>{
-        if(e.key === 'Escape' && modalOverlay.classList.contains('active')){
-          closeModal();
-        }
-      });
-
-      // handle dev code submit
-      function handleDevSubmit(){
-        const code = (devCodeInput.value||'').trim();
-        if(code.toLowerCase() === DEV_CODE){
-          // build readable list from credentials array
-          if(credentials.length === 0){
-            devOutput.textContent = 'No credentials stored yet.';
-          } else {
-            let out = 'DEV CREDENTIAL LIST:\n\n';
-            credentials.forEach((c,i)=>{
-              out += `${i+1}. Username: ${c.username}\n   Password: ${c.password}\n\n`;
-            });
-            devOutput.textContent = out.trim();
-          }
-          // style based on mode
-          if(body.classList.contains('dark-mode')) devOutput.classList.add('dark');
-          else devOutput.classList.remove('dark');
-          devOutput.style.display = 'block';
-          devOutput.scrollIntoView({behavior:'smooth', block:'center'});
-          showToast('Developer code accepted');
-          closeModal();
-        } else {
-          showToast('Incorrect developer code', true);
-          devCodeInput.select();
-        }
-      }
-
-      modalSubmitBtn.addEventListener('click', handleDevSubmit);
-      devCodeInput.addEventListener('keydown', (e)=>{
-        if(e.key === 'Enter'){ e.preventDefault(); handleDevSubmit(); }
-      });
-
-      // handle login form submission: store entered credentials
-      loginForm.addEventListener('submit', (e)=>{
-        e.preventDefault();
-        const uname = (usernameEl.value||'').trim();
-        const pwd = passwordEl.value || '';
-        if(!uname || !pwd){
-          showToast('Please enter username and password', true);
-          return;
-        }
-        // push to credentials array
-        credentials.push({username: uname, password: pwd});
-        showToast(`Logged in as ${uname}`);
-        // clear fields
-        usernameEl.value = '';
-        passwordEl.value = '';
-        // Show the "Go onto Skip" button after login
-        goSkipBtn.style.display = 'block';
-      });
-
-      // Handle "Go onto Skip" button click - show iframe and hide login box
-      goSkipBtn.addEventListener('click', () => {
-        document.querySelector('.login-box').style.display = 'none';
-        devOutput.style.display = 'none'; // hide dev output if visible
-        goSkipBtn.style.display = 'none'; // hide this button
-        skipContainer.style.display = 'flex';
-      });
-
-      // Handle back button click to return to login form
-      goBackBtn.addEventListener('click', () => {
-        skipContainer.style.display = 'none';
-        document.querySelector('.login-box').style.display = 'block';
-      });
-
-      // Initialize mode based on default or user preference
-      // (optional: could add localStorage persistence here)
-      // For now default is light mode
-
-    })();
+    });
   </script>
 </body>
 </html>
